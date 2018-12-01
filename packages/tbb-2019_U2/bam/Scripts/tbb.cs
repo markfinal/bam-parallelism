@@ -74,7 +74,11 @@ namespace tbb
                 compiler.PreprocessorDefines.Add("__TBB_BUILD", "1");
                 if (this.BuildEnvironment.Configuration.HasFlag(Bam.Core.EConfiguration.Debug))
                 {
-                    compiler.PreprocessorDefines.Add("TBB_USE_DEBUG");
+                    if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.NotWindows))
+                    {
+                        // on Windows, this will warn at compile time unless if you have a debug CRT selected
+                        compiler.PreprocessorDefines.Add("TBB_USE_DEBUG");
+                    }
                     compiler.PreprocessorDefines.Add("TBB_USE_ASSERT");
                 }
                 if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.NotWindows))

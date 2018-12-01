@@ -190,6 +190,16 @@ namespace tbb
 
                     compiler.DisableWarnings.AddUnique("keyword-macro");
                 }
+
+                if (settings is GccCommon.ICommonCompilerSettings gccCompiler)
+                {
+                    gccCompiler.AllWarnings = true;
+                    gccCompiler.ExtraWarnings = true;
+                    gccCompiler.Pedantic = false;
+                    gccCompiler.Visibility = GccCommon.EVisibility.Default;
+
+                    compiler.DisableWarnings.AddUnique("parentheses");
+                }
             });
 
             this.PublicPatch((settings, appliedTo) =>
@@ -286,6 +296,13 @@ namespace tbb
                     clangCompiler.AllWarnings = true;
                     clangCompiler.ExtraWarnings = true;
                     clangCompiler.Pedantic = true;
+                }
+
+                if (settings is GccCommon.ICommonCompilerSettings gccCompiler)
+                {
+                    gccCompiler.AllWarnings = true;
+                    gccCompiler.ExtraWarnings = true;
+                    gccCompiler.Pedantic = true;
                 }
             });
 

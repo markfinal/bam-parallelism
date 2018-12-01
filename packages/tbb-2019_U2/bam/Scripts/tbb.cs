@@ -56,7 +56,9 @@ namespace tbb
         {
             base.Init(parent);
 
-            this.CreateHeaderContainer("$(packagedir)/include/**.h");
+            var headers = this.CreateHeaderContainer("$(packagedir)/include/**.h");
+            headers.AddFiles("$(packagedir)/src/tbb/**.h");
+
             var source = this.CreateCxxSourceContainer("$(packagedir)/src/tbb/*.cpp");
             source.AddFiles("$(packagedir)/src/rml/client/rml_tbb.cpp");
 

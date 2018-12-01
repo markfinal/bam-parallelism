@@ -81,7 +81,11 @@ namespace tbb
                     }
                     compiler.PreprocessorDefines.Add("TBB_USE_ASSERT");
                 }
-                if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.NotWindows))
+                if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.Windows))
+                {
+                    compiler.PreprocessorDefines.Add("USE_WINTHREAD");
+                }
+                else
                 {
                     compiler.PreprocessorDefines.Add("USE_PTHREAD");
                 }
@@ -138,7 +142,11 @@ namespace tbb
             this.Source.PrivatePatch(settings =>
             {
                 var compiler = settings as C.ICommonCompilerSettings;
-                if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.NotWindows))
+                if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.Windows))
+                {
+                    compiler.PreprocessorDefines.Add("USE_WINTHREAD");
+                }
+                else
                 {
                     compiler.PreprocessorDefines.Add("USE_PTHREAD");
                 }

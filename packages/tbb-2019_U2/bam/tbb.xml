@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PackageDefinition xsi:schemaLocation="http://www.buildamation.com ./Schema/BamPackageDefinitionV1.xsd" name="tbb" version="2019_U2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.buildamation.com">
+  <Description>Intel Thread Building Blocks</Description>
+  <Sources>
+    <Source type="http" path="https://github.com/01org/tbb/archive/2019_U2.tar.gz" subdir="tbb-2019_U2" />
+  </Sources>
+  <Dependents>
+    <Package name="C" />
+    <Package name="Clang" version="Xcode9" />
+    <Package name="MakeFileBuilder" />
+    <Package name="NativeBuilder" />
+    <Package name="Publisher" />
+    <Package name="VisualC" version="15.0" />
+    <Package name="VSSolutionBuilder" />
+    <Package name="XcodeBuilder" />
+  </Dependents>
+  <BamAssemblies>
+    <BamAssembly name="Bam.Core" major="2" minor="0" />
+  </BamAssemblies>
+  <DotNetAssemblies>
+    <DotNetAssembly name="System" requiredTargetFramework="4.0.30319" />
+    <DotNetAssembly name="System.Xml" requiredTargetFramework="4.0.30319" />
+    <DotNetAssembly name="System.Core" requiredTargetFramework="4.0.30319" />
+  </DotNetAssemblies>
+  <SupportedPlatforms>
+    <Platform name="Windows" />
+    <Platform name="Linux" />
+    <Platform name="OSX" />
+  </SupportedPlatforms>
+</PackageDefinition>

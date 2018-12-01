@@ -121,6 +121,11 @@ namespace tbb
                     cxxLinker.StandardLibrary = C.Cxx.EStandardLibrary.libcxx;
                 }
             });
+
+            if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.Windows))
+            {
+                this.CreateAssemblerSourceContainer("$(packagedir)/src/tbb/intel64-masm/intel64_misc.asm");
+            }
         }
     }
 

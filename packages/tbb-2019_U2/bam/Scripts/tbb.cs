@@ -30,6 +30,90 @@
 using Bam.Core;
 namespace tbb
 {
+    class PreprocessExportFile :
+        C.ObjectFileBase
+    {
+        protected override bool RequiresHeaderEvaluation => true;
+
+        protected override void
+        Init(
+            Bam.Core.Module parent)
+        {
+            base.Init(parent);
+            this.Tool = C.DefaultToolchain.C_Compiler(this.BitDepth);
+            this.RegisterGeneratedFile(
+                ObjectFileKey,
+                this.CreateTokenizedString("$(packagebuilddir)/$(config)/tbb.def")
+            );
+            this.PrivatePatch(settings =>
+            {
+                var compiler = settings as C.ICommonCompilerSettings;
+                compiler.PreprocessOnly = true;
+                compiler.IncludePaths.AddUnique(this.CreateTokenizedString("$(packagedir)/include"));
+
+                if (settings is ClangCommon.ICommonCompilerSettings)
+                {
+                    compiler.DisableWarnings.AddUnique("invalid-pp-token");
+                }
+            });
+        }
+
+        protected override void
+        EvaluateInternal()
+        {
+        }
+
+        protected override void
+        ExecuteInternal(
+            Bam.Core.ExecutionContext context)
+        {
+            switch (Bam.Core.Graph.Instance.Mode)
+            {
+#if D_PACKAGE_MAKEFILEBUILDER
+                case "MakeFile":
+                    MakeFileBuilder.Support.Add(this);
+                    break;
+#endif
+
+#if D_PACKAGE_NATIVEBUILDER
+                case "Native":
+                    NativeBuilder.Support.RunCommandLineTool(this, context);
+                    break;
+#endif
+
+#if D_PACKAGE_VSSOLUTIONBUILDER
+                case "VSSolution":
+                    VSSolutionBuilder.Support.AddCustomBuildStepForCommandLineTool(
+                        this,
+                        this.InputPath,
+                        "Preprocessing",
+                        true
+                    );
+                    break;
+#endif
+
+#if D_PACKAGE_XCODEBUILDER
+                case "Xcode":
+                    {
+                        XcodeBuilder.Support.AddPreBuildStepForCommandLineTool(
+                            this,
+                            out XcodeBuilder.Target target,
+                            out XcodeBuilder.Configuration configuration,
+                            XcodeBuilder.FileReference.EFileType.GLSLShaderSource,
+                            true,
+                            false,
+                            outputPaths: new Bam.Core.TokenizedStringArray(this.InputPath)
+                        );
+                    }
+                    break;
+#endif
+
+                default:
+                    throw new System.NotImplementedException();
+            }
+        }
+    }
+
     [Bam.Core.ModuleGroup("Thirdparty/TBB")]
     class VersionStringVer :
         C.ProceduralHeaderFile
@@ -126,7 +210,41 @@ namespace tbb
 
             if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.Windows))
             {
+                // some assembly required
                 this.CreateAssemblerSourceContainer("$(packagedir)/src/tbb/intel64-masm/intel64_misc.asm");
+            }
+
+            if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.Windows))
+            {
+                var preprocessedExportFile = Bam.Core.Module.Create<PreprocessExportFile>(preInitCallback: module =>
+                {
+                    module.InputPath = this.CreateTokenizedString("$(packagedir)/src/tbb/win64-tbb-export.def");
+                });
+                this.DependsOn(preprocessedExportFile);
+
+                this.PrivatePatch(settings =>
+                {
+                    if (settings is C.ICommonLinkerSettingsWin winLinker)
+                    {
+                        winLinker.ExportDefinitionFile = preprocessedExportFile.GeneratedPaths[C.ObjectFileBase.ObjectFileKey];
+                    }
+                });
+            }
+            else if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.Linux))
+            {
+                var preprocessedExportFile = Bam.Core.Module.Create<PreprocessExportFile>(preInitCallback: module =>
+                {
+                    module.InputPath = this.CreateTokenizedString("$(packagedir)/src/tbb/lin64-tbb-export.def");
+                });
+                this.DependsOn(preprocessedExportFile);
+            }
+            else if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.OSX))
+            {
+                var preprocessedExportFile = Bam.Core.Module.Create<PreprocessExportFile>(preInitCallback: module =>
+                {
+                    module.InputPath = this.CreateTokenizedString("$(packagedir)/src/tbb/mac64-tbb-export.def");
+                });
+                this.DependsOn(preprocessedExportFile);
             }
         }
     }

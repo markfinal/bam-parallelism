@@ -336,8 +336,11 @@ namespace tbb
                 {
                     cxxLinker.StandardLibrary = C.Cxx.EStandardLibrary.libcxx;
                 }
-                if (settings is GccCommon.ICommonLinkerSettings)
+                if (settings is GccCommon.ICommonLinkerSettings gccLinker)
                 {
+                    gccLinker.CanUseOrigin = true;
+                    gccLinker.RPath.AddUnique("$ORIGIN");
+
                     var linker = settings as C.ICommonLinkerSettings;
                     linker.Libraries.AddUnique("-lpthread");
                     linker.Libraries.AddUnique("-ldl");

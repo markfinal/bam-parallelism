@@ -326,7 +326,7 @@ namespace tbb
                 {
                     gccCompiler.AllWarnings = true;
                     gccCompiler.ExtraWarnings = true;
-                    gccCompiler.Pedantic = true;
+                    gccCompiler.Pedantic = false;
                 }
             });
 
@@ -335,6 +335,12 @@ namespace tbb
                 if (settings is C.ICxxOnlyLinkerSettings cxxLinker)
                 {
                     cxxLinker.StandardLibrary = C.Cxx.EStandardLibrary.libcxx;
+                }
+                if (settings is GccCommon.ICommonLinkerSettings)
+                {
+                    var linker = settings as C.ICommonLinkerSettings;
+                    linker.Libraries.AddUnique("-lpthread");
+                    linker.Libraries.AddUnique("-ldl");
                 }
             });
         }

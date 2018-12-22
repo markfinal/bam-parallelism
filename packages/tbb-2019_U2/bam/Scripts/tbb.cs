@@ -144,6 +144,10 @@ namespace tbb
             headers.AddFiles("$(packagedir)/src/tbb/**.h");
 
             var source = this.CreateCxxSourceContainer("$(packagedir)/src/tbb/*.cpp");
+            source.AddFiles("$(packagedir)/src/old/concurrent_queue_v2.cpp");
+            source.AddFiles("$(packagedir)/src/old/concurrent_vector_v2.cpp");
+            source.AddFiles("$(packagedir)/src/old/spin_rw_mutex_v2.cpp");
+            source.AddFiles("$(packagedir)/src/old/task_v2.cpp");
             source.AddFiles("$(packagedir)/src/rml/client/rml_tbb.cpp");
 
             var versionString = Bam.Core.Graph.Instance.FindReferencedModule<VersionStringVer>();

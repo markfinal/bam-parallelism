@@ -207,6 +207,7 @@ namespace tbb
                     gccCompiler.AllWarnings = true;
                     gccCompiler.ExtraWarnings = true;
                     gccCompiler.Pedantic = false;
+                    // still needed, even with an version script, otherwise symbols are missing
                     gccCompiler.Visibility = GccCommon.EVisibility.Default;
 
                     compiler.DisableWarnings.AddUnique("parentheses");
@@ -258,6 +259,12 @@ namespace tbb
                     module.InputPath = this.CreateTokenizedString("$(packagedir)/src/tbb/lin64-tbb-export.def");
                 });
                 this.DependsOn(preprocessedExportFile);
+
+                this.PrivatePatch(settings =>
+                {
+                    var gccLinker = settings as GccCommon.ICommonLinkerSettings;
+                    gccLinker.VersionScript = preprocessedExportFile.GeneratedPaths[C.ObjectFileBase.ObjectFileKey];
+                });
             }
             else if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.OSX))
             {

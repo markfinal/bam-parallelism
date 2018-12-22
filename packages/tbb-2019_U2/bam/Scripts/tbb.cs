@@ -40,7 +40,7 @@ namespace tbb
             Bam.Core.Module parent)
         {
             base.Init(parent);
-            this.Tool = C.DefaultToolchain.C_Compiler(this.BitDepth);
+            this.Tool = C.DefaultToolchain.Cxx_Compiler(this.BitDepth);
             this.RegisterGeneratedFile(
                 ObjectFileKey,
                 this.CreateTokenizedString("$(packagebuilddir)/$(config)/tbb.def")
@@ -50,6 +50,9 @@ namespace tbb
                 var compiler = settings as C.ICommonCompilerSettings;
                 compiler.PreprocessOnly = true;
                 compiler.IncludePaths.AddUnique(this.CreateTokenizedString("$(packagedir)/include"));
+
+                var cxxCompiler = settings as C.ICxxOnlyCompilerSettings;
+                cxxCompiler.LanguageStandard = C.Cxx.ELanguageStandard.Cxx11;
 
                 if (settings is ClangCommon.ICommonCompilerSettings)
                 {
@@ -190,6 +193,8 @@ namespace tbb
                     clangCompiler.AllWarnings = true;
                     clangCompiler.ExtraWarnings = true;
                     clangCompiler.Pedantic = true;
+                    // still needed, even with an exported symbol list, otherwise there are ld warnings
+                    // e.g. ld: warning: cannot export hidden symbol tbb::mutex::scoped_lock::internal_acquire(tbb::mutex&) from /Users/mark/dev/bam-parallelism/packages/tbb-2019_U2/build/tbb-2019_U2/ThreadBuildingBlocks/Debug/obj/src/tbb/mutex.o
                     clangCompiler.Visibility = ClangCommon.EVisibility.Default;
 
                     compiler.DisableWarnings.AddUnique("keyword-macro");

@@ -143,6 +143,8 @@ namespace tbb
         {
             base.Init(parent);
 
+            this.Macros["OutputName"] = Bam.Core.TokenizedString.CreateVerbatim("tbb");
+
             var headers = this.CreateHeaderContainer("$(packagedir)/include/**.h");
             headers.AddFiles("$(packagedir)/src/tbb/**.h");
 

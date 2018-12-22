@@ -264,6 +264,12 @@ namespace tbb
                     module.InputPath = this.CreateTokenizedString("$(packagedir)/src/tbb/mac64-tbb-export.def");
                 });
                 this.DependsOn(preprocessedExportFile);
+
+                this.PrivatePatch(settings =>
+                {
+                    var clangLinker = settings as ClangCommon.ICommonLinkerSettings;
+                    clangLinker.ExportedSymbolList = preprocessedExportFile.GeneratedPaths[C.ObjectFileBase.ObjectFileKey];
+                });
             }
         }
     }

@@ -31,39 +31,35 @@ using Bam.Core;
 namespace tbb
 {
     class PreprocessExportFile :
-        C.ObjectFileBase
+        C.CModule,
+        Bam.Core.IInputPath,
+        C.IRequiresSourceModule
     {
-        protected override bool RequiresHeaderEvaluation => true;
+        public const string PreprocessedFileKey = "Preprocessed file";
+
+        protected C.SourceFile SourceModule;
 
         protected override void
         Init(
             Bam.Core.Module parent)
         {
             base.Init(parent);
-            this.Tool = C.DefaultToolchain.Cxx_Compiler(this.BitDepth);
+            this.Tool = C.DefaultToolchain.Preprocessor(this.BitDepth);
             this.RegisterGeneratedFile(
-                ObjectFileKey,
+                PreprocessedFileKey,
                 this.CreateTokenizedString("$(packagebuilddir)/$(config)/tbb.def")
             );
             this.PrivatePatch(settings =>
             {
-                var compiler = settings as C.ICommonCompilerSettings;
-                compiler.PreprocessOnly = true;
-                compiler.IncludePaths.AddUnique(this.CreateTokenizedString("$(packagedir)/include"));
-
-                var cxxCompiler = settings as C.ICxxOnlyCompilerSettings;
-                cxxCompiler.LanguageStandard = C.Cxx.ELanguageStandard.Cxx11;
-
-                if (settings is ClangCommon.ICommonCompilerSettings)
-                {
-                    compiler.DisableWarnings.AddUnique("invalid-pp-token");
-                }
+                var preprocessor = settings as C.ICommonPreprocessorSettings;
+                preprocessor.TargetLanguage = C.ETargetLanguage.Cxx;
             });
         }
 
         protected override void
         EvaluateInternal()
         {
+            // TODO: should be similar to the ObjectFile one, include header dependencies
         }
 
         protected override void
@@ -74,45 +70,112 @@ namespace tbb
             {
 #if D_PACKAGE_MAKEFILEBUILDER
                 case "MakeFile":
-                    MakeFileBuilder.Support.Add(this);
+                    MakeFileBuilder.Support.Add(
+                        this,
+                        redirectOutputToFile: this.GeneratedPaths[PreprocessedFileKey]
+                    );
                     break;
 #endif
 
 #if D_PACKAGE_NATIVEBUILDER
                 case "Native":
-                    NativeBuilder.Support.RunCommandLineTool(this, context);
+                    {
+                        NativeBuilder.Support.RunCommandLineTool(this, context);
+                        NativeBuilder.Support.SendCapturedOutputToFile(
+                            this,
+                            context,
+                            PreprocessedFileKey
+                        );
+                    }
                     break;
 #endif
 
 #if D_PACKAGE_VSSOLUTIONBUILDER
                 case "VSSolution":
-                    VSSolutionBuilder.Support.AddCustomBuildStepForCommandLineTool(
+                    C.VSSolutionSupport.GenerateFileFromToolStandardOutput(
                         this,
-                        this.InputPath,
-                        "Preprocessing",
-                        true
+                        PreprocessExportFile.PreprocessedFileKey
                     );
                     break;
 #endif
 
 #if D_PACKAGE_XCODEBUILDER
                 case "Xcode":
-                    {
-                        XcodeBuilder.Support.AddPreBuildStepForCommandLineTool(
-                            this,
-                            out XcodeBuilder.Target target,
-                            out XcodeBuilder.Configuration configuration,
-                            XcodeBuilder.FileReference.EFileType.GLSLShaderSource,
-                            true,
-                            false,
-                            outputPaths: new Bam.Core.TokenizedStringArray(this.InputPath)
-                        );
-                    }
+                    C.XcodeSupport.GenerateFileFromToolStandardOutput(
+                        this,
+                        PreprocessExportFile.PreprocessedFileKey
+                    );
                     break;
 #endif
 
                 default:
                     throw new System.NotImplementedException();
+            }
+        }
+
+        C.SourceFile C.IRequiresSourceModule.Source
+        {
+            get
+            {
+                return this.SourceModule;
+            }
+
+            set
+            {
+                if (null != this.SourceModule)
+                {
+                    this.SourceModule.InputPath.Parse();
+                    throw new Bam.Core.Exception(
+                        $"Source module already set on this object file, to '{this.SourceModule.InputPath.ToString()}'"
+                    );
+                }
+                this.SourceModule = value;
+                this.DependsOn(value);
+                this.RegisterGeneratedFile(
+                    PreprocessedFileKey,
+                    this.CreateTokenizedString(
+                        "$(packagebuilddir)/$(moduleoutputdir)/@changeextension(@isrelative(@trimstart(@relativeto($(0),$(packagedir)),../),@filename($(0))),$(objext))",
+                        value.GeneratedPaths[C.SourceFile.SourceFileKey]
+                    )
+                );
+            }
+        }
+
+        public Bam.Core.TokenizedString InputPath
+        {
+            get
+            {
+                if (null == this.SourceModule)
+                {
+                    throw new Bam.Core.Exception("Source module not yet set on this object file");
+                }
+                return this.SourceModule.InputPath;
+            }
+            set
+            {
+                if (null != this.SourceModule)
+                {
+                    this.SourceModule.InputPath.Parse();
+                    throw new Bam.Core.Exception(
+                        $"Source module already set on this object file, to '{this.SourceModule.InputPath.ToString()}'"
+                    );
+                }
+
+                // this cannot be a referenced module, since there will be more than one object
+                // of this type (generally)
+                // but this does mean there may be many instances of this 'type' of module
+                // and for multi-configuration builds there may be many instances of the same path
+                var source = Bam.Core.Module.Create<C.SourceFile>();
+                source.InputPath = value;
+                (this as C.IRequiresSourceModule).Source = source;
+            }
+        }
+
+        public override System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, Bam.Core.Module>> InputModules
+        {
+            get
+            {
+                yield return new System.Collections.Generic.KeyValuePair<string, Bam.Core.Module>(C.SourceFile.SourceFileKey, this.SourceModule);
             }
         }
     }
@@ -162,27 +225,27 @@ namespace tbb
 
             source.PrivatePatch(settings =>
             {
-                var compiler = settings as C.ICommonCompilerSettings;
-                compiler.IncludePaths.AddUnique(this.CreateTokenizedString("$(packagedir)/src"));
+                var preprocessor = settings as C.ICommonPreprocessorSettings;
+                preprocessor.IncludePaths.AddUnique(this.CreateTokenizedString("$(packagedir)/src"));
 
-                compiler.PreprocessorDefines.Add("TBB_USE_EXCEPTIONS");
-                compiler.PreprocessorDefines.Add("__TBB_BUILD", "1");
+                preprocessor.PreprocessorDefines.Add("TBB_USE_EXCEPTIONS");
+                preprocessor.PreprocessorDefines.Add("__TBB_BUILD", "1");
                 if (this.BuildEnvironment.Configuration.HasFlag(Bam.Core.EConfiguration.Debug))
                 {
                     if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.NotWindows))
                     {
                         // on Windows, this will warn at compile time unless if you have a debug CRT selected
-                        compiler.PreprocessorDefines.Add("TBB_USE_DEBUG");
+                        preprocessor.PreprocessorDefines.Add("TBB_USE_DEBUG");
                     }
-                    compiler.PreprocessorDefines.Add("TBB_USE_ASSERT");
+                    preprocessor.PreprocessorDefines.Add("TBB_USE_ASSERT");
                 }
                 if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.Windows))
                 {
-                    compiler.PreprocessorDefines.Add("USE_WINTHREAD");
+                    preprocessor.PreprocessorDefines.Add("USE_WINTHREAD");
                 }
                 else
                 {
-                    compiler.PreprocessorDefines.Add("USE_PTHREAD");
+                    preprocessor.PreprocessorDefines.Add("USE_PTHREAD");
                 }
 
                 var cxxCompiler = settings as C.ICxxOnlyCompilerSettings;
@@ -199,6 +262,7 @@ namespace tbb
                     // e.g. ld: warning: cannot export hidden symbol tbb::mutex::scoped_lock::internal_acquire(tbb::mutex&) from /Users/mark/dev/bam-parallelism/packages/tbb-2019_U2/build/tbb-2019_U2/ThreadBuildingBlocks/Debug/obj/src/tbb/mutex.o
                     clangCompiler.Visibility = ClangCommon.EVisibility.Default;
 
+                    var compiler = settings as C.ICommonCompilerSettings;
                     compiler.DisableWarnings.AddUnique("keyword-macro");
                 }
 
@@ -210,15 +274,16 @@ namespace tbb
                     // still needed, even with an version script, otherwise symbols are missing
                     gccCompiler.Visibility = GccCommon.EVisibility.Default;
 
+                    var compiler = settings as C.ICommonCompilerSettings;
                     compiler.DisableWarnings.AddUnique("parentheses");
                 }
             });
 
             this.PublicPatch((settings, appliedTo) =>
             {
-                if (settings is C.ICommonCompilerSettings compiler)
+                if (settings is C.ICommonPreprocessorSettings preprocessor)
                 {
-                    compiler.IncludePaths.AddUnique(this.CreateTokenizedString("$(packagedir)/include"));
+                    preprocessor.IncludePaths.AddUnique(this.CreateTokenizedString("$(packagedir)/include"));
                 }
             });
 
@@ -248,7 +313,7 @@ namespace tbb
                 {
                     if (settings is C.ICommonLinkerSettingsWin winLinker)
                     {
-                        winLinker.ExportDefinitionFile = preprocessedExportFile.GeneratedPaths[C.ObjectFileBase.ObjectFileKey];
+                        winLinker.ExportDefinitionFile = preprocessedExportFile.GeneratedPaths[PreprocessExportFile.PreprocessedFileKey];
                     }
                 });
             }
@@ -263,7 +328,7 @@ namespace tbb
                 this.PrivatePatch(settings =>
                 {
                     var gccLinker = settings as GccCommon.ICommonLinkerSettings;
-                    gccLinker.VersionScript = preprocessedExportFile.GeneratedPaths[C.ObjectFileBase.ObjectFileKey];
+                    gccLinker.VersionScript = preprocessedExportFile.GeneratedPaths[PreprocessExportFile.PreprocessedFileKey];
                 });
             }
             else if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.OSX))
@@ -277,7 +342,7 @@ namespace tbb
                 this.PrivatePatch(settings =>
                 {
                     var clangLinker = settings as ClangCommon.ICommonLinkerSettings;
-                    clangLinker.ExportedSymbolList = preprocessedExportFile.GeneratedPaths[C.ObjectFileBase.ObjectFileKey];
+                    clangLinker.ExportedSymbolList = preprocessedExportFile.GeneratedPaths[PreprocessExportFile.PreprocessedFileKey];
                 });
             }
         }
@@ -300,14 +365,14 @@ namespace tbb
 
             this.Source.PrivatePatch(settings =>
             {
-                var compiler = settings as C.ICommonCompilerSettings;
+                var preprocess = settings as C.ICommonPreprocessorSettings;
                 if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.Windows))
                 {
-                    compiler.PreprocessorDefines.Add("USE_WINTHREAD");
+                    preprocess.PreprocessorDefines.Add("USE_WINTHREAD");
                 }
                 else
                 {
-                    compiler.PreprocessorDefines.Add("USE_PTHREAD");
+                    preprocess.PreprocessorDefines.Add("USE_PTHREAD");
                 }
 
                 var cxxCompiler = settings as C.ICxxOnlyCompilerSettings;

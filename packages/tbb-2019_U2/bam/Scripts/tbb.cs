@@ -218,6 +218,18 @@ namespace tbb
             source.AddFiles("$(packagedir)/src/old/task_v2.cpp");
             source.AddFiles("$(packagedir)/src/rml/client/rml_tbb.cpp");
 
+            if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.Windows))
+            {
+                if (this.BitDepth == C.EBit.SixtyFour)
+                {
+                    this.CreateAssemblerSourceContainer("$(packagedir)/src/tbb/intel64-masm/*.asm");
+                }
+                else
+                {
+                    this.CreateAssemblerSourceContainer("$(packagedir)/src/tbb/ia32-masm/*.asm");
+                }
+            }
+
             var versionString = Bam.Core.Graph.Instance.FindReferencedModule<VersionStringVer>();
             source.DependsOn(versionString);
             this.DependsOn(versionString);

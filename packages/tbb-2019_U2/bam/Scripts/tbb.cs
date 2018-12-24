@@ -31,20 +31,13 @@ using Bam.Core;
 namespace tbb
 {
     class PreprocessExportFile :
-        C.CModule,
-        Bam.Core.IInputPath,
-        C.IRequiresSourceModule
+        C.PreprocessedFile
     {
-        public const string PreprocessedFileKey = "Preprocessed file";
-
-        protected C.SourceFile SourceModule;
-
         protected override void
         Init(
             Bam.Core.Module parent)
         {
             base.Init(parent);
-            this.Tool = C.DefaultToolchain.Preprocessor(this.BitDepth);
             this.RegisterGeneratedFile(
                 PreprocessedFileKey,
                 this.CreateTokenizedString("$(packagebuilddir)/$(config)/tbb.def")
@@ -54,129 +47,6 @@ namespace tbb
                 var preprocessor = settings as C.ICommonPreprocessorSettings;
                 preprocessor.TargetLanguage = C.ETargetLanguage.Cxx;
             });
-        }
-
-        protected override void
-        EvaluateInternal()
-        {
-            // TODO: should be similar to the ObjectFile one, include header dependencies
-        }
-
-        protected override void
-        ExecuteInternal(
-            Bam.Core.ExecutionContext context)
-        {
-            switch (Bam.Core.Graph.Instance.Mode)
-            {
-#if D_PACKAGE_MAKEFILEBUILDER
-                case "MakeFile":
-                    MakeFileBuilder.Support.Add(
-                        this,
-                        redirectOutputToFile: this.GeneratedPaths[PreprocessedFileKey]
-                    );
-                    break;
-#endif
-
-#if D_PACKAGE_NATIVEBUILDER
-                case "Native":
-                    {
-                        NativeBuilder.Support.RunCommandLineTool(this, context);
-                        NativeBuilder.Support.SendCapturedOutputToFile(
-                            this,
-                            context,
-                            PreprocessedFileKey
-                        );
-                    }
-                    break;
-#endif
-
-#if D_PACKAGE_VSSOLUTIONBUILDER
-                case "VSSolution":
-                    C.VSSolutionSupport.GenerateFileFromToolStandardOutput(
-                        this,
-                        PreprocessExportFile.PreprocessedFileKey
-                    );
-                    break;
-#endif
-
-#if D_PACKAGE_XCODEBUILDER
-                case "Xcode":
-                    C.XcodeSupport.GenerateFileFromToolStandardOutput(
-                        this,
-                        PreprocessExportFile.PreprocessedFileKey
-                    );
-                    break;
-#endif
-
-                default:
-                    throw new System.NotImplementedException();
-            }
-        }
-
-        C.SourceFile C.IRequiresSourceModule.Source
-        {
-            get
-            {
-                return this.SourceModule;
-            }
-
-            set
-            {
-                if (null != this.SourceModule)
-                {
-                    this.SourceModule.InputPath.Parse();
-                    throw new Bam.Core.Exception(
-                        $"Source module already set on this object file, to '{this.SourceModule.InputPath.ToString()}'"
-                    );
-                }
-                this.SourceModule = value;
-                this.DependsOn(value);
-                this.RegisterGeneratedFile(
-                    PreprocessedFileKey,
-                    this.CreateTokenizedString(
-                        "$(packagebuilddir)/$(moduleoutputdir)/@changeextension(@isrelative(@trimstart(@relativeto($(0),$(packagedir)),../),@filename($(0))),$(objext))",
-                        value.GeneratedPaths[C.SourceFile.SourceFileKey]
-                    )
-                );
-            }
-        }
-
-        public Bam.Core.TokenizedString InputPath
-        {
-            get
-            {
-                if (null == this.SourceModule)
-                {
-                    throw new Bam.Core.Exception("Source module not yet set on this object file");
-                }
-                return this.SourceModule.InputPath;
-            }
-            set
-            {
-                if (null != this.SourceModule)
-                {
-                    this.SourceModule.InputPath.Parse();
-                    throw new Bam.Core.Exception(
-                        $"Source module already set on this object file, to '{this.SourceModule.InputPath.ToString()}'"
-                    );
-                }
-
-                // this cannot be a referenced module, since there will be more than one object
-                // of this type (generally)
-                // but this does mean there may be many instances of this 'type' of module
-                // and for multi-configuration builds there may be many instances of the same path
-                var source = Bam.Core.Module.Create<C.SourceFile>();
-                source.InputPath = value;
-                (this as C.IRequiresSourceModule).Source = source;
-            }
-        }
-
-        public override System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, Bam.Core.Module>> InputModules
-        {
-            get
-            {
-                yield return new System.Collections.Generic.KeyValuePair<string, Bam.Core.Module>(C.SourceFile.SourceFileKey, this.SourceModule);
-            }
         }
     }
 

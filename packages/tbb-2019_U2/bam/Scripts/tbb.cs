@@ -48,6 +48,25 @@ namespace tbb
                 preprocessor.TargetLanguage = C.ETargetLanguage.Cxx;
             });
         }
+
+        protected override void
+        ExecuteInternal(
+            Bam.Core.ExecutionContext context)
+        {
+            switch (Bam.Core.Graph.Instance.Mode)
+            {
+#if D_PACKAGE_VSSOLUTIONBUILDER
+                case "VSSolution":
+                    C.VSSolutionSupport.GenerateFileFromToolStandardOutput(
+                        this,
+                        PreprocessedFileKey,
+                        includeEnvironmentVariables: false // since it's running the preprocessor in the IDE, no environment variables necessary
+                    );
+                    return; // don't process any more
+#endif
+            }
+            base.ExecuteInternal(context);
+        }
     }
 
     [Bam.Core.ModuleGroup("Thirdparty/TBB")]

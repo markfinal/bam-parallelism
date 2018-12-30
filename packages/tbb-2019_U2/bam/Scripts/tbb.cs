@@ -76,6 +76,9 @@ namespace tbb
         {
             base.Init(parent);
 
+            // TODO: this needs to be just 2, but there is this bug https://github.com/markfinal/BuildAMation/issues/521
+            this.SetSemanticVersion(2, 0); // see include/tbb/tbb_stddef.h, TBB_COMPATIBLE_INTERFACE_VERSION
+
             this.Macros["OutputName"] = Bam.Core.TokenizedString.CreateVerbatim("tbb");
 
             var headers = this.CreateHeaderContainer("$(packagedir)/include/**.h");

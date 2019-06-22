@@ -68,6 +68,9 @@ struct Executor
     }
 
     const std::vector<Task> &_tasks;
+
+private:
+    Executor& operator=(const Executor&); // for older compilers
 };
 
 int main()

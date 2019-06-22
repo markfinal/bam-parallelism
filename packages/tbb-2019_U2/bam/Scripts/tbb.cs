@@ -150,6 +150,15 @@ namespace tbb
 
                     var compiler = settings as C.ICommonCompilerSettings;
                     compiler.DisableWarnings.AddUnique("keyword-macro");
+
+                    var clangMeta = Bam.Core.Graph.Instance.PackageMetaData<Clang.MetaData>("Clang");
+                    if (null != clangMeta)
+                    {
+                        if (clangMeta.ToolchainVersion.AtLeast(ClangCommon.ToolchainVersion.Xcode_10))
+                        {
+                            compiler.DisableWarnings.AddUnique("unused-private-field"); // this might have to go public, as it's in a public header
+                        }
+                    }
                 }
 
                 if (settings is GccCommon.ICommonCompilerSettings gccCompiler)

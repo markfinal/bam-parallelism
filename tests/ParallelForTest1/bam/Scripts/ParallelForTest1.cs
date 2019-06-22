@@ -49,6 +49,7 @@ namespace ParallelForTest1
 
                 var cxxCompiler = settings as C.ICxxOnlyCompilerSettings;
                 cxxCompiler.LanguageStandard = C.Cxx.ELanguageStandard.Cxx11;
+                cxxCompiler.StandardLibrary = C.Cxx.EStandardLibrary.libcxx; // will fail to find standard headers otherwise
                 cxxCompiler.ExceptionHandler = C.Cxx.EExceptionHandler.Asynchronous;
 
                 if (settings is VisualCCommon.ICommonCompilerSettings vcCompiler)
@@ -71,6 +72,10 @@ namespace ParallelForTest1
 
             this.PrivatePatch(settings =>
             {
+                if (settings is C.ICxxOnlyLinkerSettings cxxLinker)
+                {
+                    cxxLinker.StandardLibrary = C.Cxx.EStandardLibrary.libcxx;
+                }
                 if (settings is GccCommon.ICommonLinkerSettings gccLinker)
                 {
                     gccLinker.CanUseOrigin = true;

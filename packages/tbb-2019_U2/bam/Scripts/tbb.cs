@@ -170,6 +170,18 @@ namespace tbb
                 {
                     preprocessor.IncludePaths.AddUnique(this.CreateTokenizedString("$(packagedir)/include"));
                 }
+                if (settings is GccCommon.ICommonCompilerSettings gccCompiler)
+                {
+                    var gccMetaData = Bam.Core.Graph.Instance.PackageMetaData<Gcc.MetaData>("Gcc");
+                    if (null != gccMetaData)
+                    {
+                        if (gccMetaData.ToolchainVersion.AtLeast(GccCommon.ToolchainVersion.GCC_9))
+                        {
+                            var compiler = settings as C.ICommonCompilerSettings;
+                            compiler.DisableWarnings.AddUnique("class-memaccess");
+                        }
+                    }
+                }
             });
 
             this.PrivatePatch(settings =>

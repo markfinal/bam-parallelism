@@ -59,7 +59,7 @@ namespace ParallelForTest1
                 {
                     gccCompiler.AllWarnings = true;
                     gccCompiler.ExtraWarnings = true;
-                    gccCompiler.Pedantic = true;
+                    gccCompiler.Pedantic = false; // some extra semi-colons in TBB headers
                 }
                 else if (settings is ClangCommon.ICommonCompilerSettings clangCompiler)
                 {

@@ -48,6 +48,7 @@ namespace ParallelForTest1
                 compiler.WarningsAsErrors = true;
 
                 var cxxCompiler = settings as C.ICxxOnlyCompilerSettings;
+                cxxCompiler.LanguageStandard = C.Cxx.ELanguageStandard.Cxx11;
                 cxxCompiler.ExceptionHandler = C.Cxx.EExceptionHandler.Asynchronous;
 
                 if (settings is VisualCCommon.ICommonCompilerSettings vcCompiler)
@@ -65,6 +66,19 @@ namespace ParallelForTest1
                     clangCompiler.AllWarnings = true;
                     clangCompiler.ExtraWarnings = true;
                     clangCompiler.Pedantic = true;
+                }
+            });
+
+            this.PrivatePatch(settings =>
+            {
+                if (settings is GccCommon.ICommonLinkerSettings gccLinker)
+                {
+                    gccLinker.CanUseOrigin = true;
+                    gccLinker.RPath.AddUnique("$ORIGIN");
+
+                    var linker = settings as C.ICommonLinkerSettings;
+                    linker.Libraries.AddUnique("-lpthread");
+                    linker.Libraries.AddUnique("-ldl");
                 }
             });
         }

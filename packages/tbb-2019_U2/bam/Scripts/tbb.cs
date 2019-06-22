@@ -91,6 +91,7 @@ namespace tbb
             source.AddFiles("$(packagedir)/src/old/task_v2.cpp");
             source.AddFiles("$(packagedir)/src/rml/client/rml_tbb.cpp");
 
+            // some assembly required
             if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.Windows))
             {
                 if (this.BitDepth == C.EBit.SixtyFour)
@@ -194,15 +195,16 @@ namespace tbb
 
             if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.Windows))
             {
-                // some assembly required
-                this.CreateAssemblerSourceContainer("$(packagedir)/src/tbb/intel64-masm/intel64_misc.asm");
-            }
-
-            if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.Windows))
-            {
                 var preprocessedExportFile = Bam.Core.Module.Create<PreprocessExportFile>(preInitCallback: module =>
                 {
-                    module.InputPath = this.CreateTokenizedString("$(packagedir)/src/tbb/win64-tbb-export.def");
+                    if (this.BitDepth == C.EBit.SixtyFour)
+                    {
+                        module.InputPath = this.CreateTokenizedString("$(packagedir)/src/tbb/win64-tbb-export.def");
+                    }
+                    else
+                    {
+                        module.InputPath = this.CreateTokenizedString("$(packagedir)/src/tbb/win32-tbb-export.def");
+                    }
                 });
                 this.DependsOn(preprocessedExportFile);
 
@@ -218,7 +220,14 @@ namespace tbb
             {
                 var preprocessedExportFile = Bam.Core.Module.Create<PreprocessExportFile>(preInitCallback: module =>
                 {
-                    module.InputPath = this.CreateTokenizedString("$(packagedir)/src/tbb/lin64-tbb-export.def");
+                    if (this.BitDepth == C.EBit.SixtyFour)
+                    {
+                        module.InputPath = this.CreateTokenizedString("$(packagedir)/src/tbb/lin64-tbb-export.def");
+                    }
+                    else
+                    {
+                        module.InputPath = this.CreateTokenizedString("$(packagedir)/src/tbb/lin32-tbb-export.def");
+                    }
                 });
                 this.DependsOn(preprocessedExportFile);
 
@@ -232,7 +241,14 @@ namespace tbb
             {
                 var preprocessedExportFile = Bam.Core.Module.Create<PreprocessExportFile>(preInitCallback: module =>
                 {
-                    module.InputPath = this.CreateTokenizedString("$(packagedir)/src/tbb/mac64-tbb-export.def");
+                    if (this.BitDepth == C.EBit.SixtyFour)
+                    {
+                        module.InputPath = this.CreateTokenizedString("$(packagedir)/src/tbb/mac64-tbb-export.def");
+                    }
+                    else
+                    {
+                        module.InputPath = this.CreateTokenizedString("$(packagedir)/src/tbb/mac32-tbb-export.def");
+                    }
                 });
                 this.DependsOn(preprocessedExportFile);
 

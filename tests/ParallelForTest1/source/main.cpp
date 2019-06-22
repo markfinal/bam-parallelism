@@ -69,8 +69,10 @@ struct Executor
 
     const std::vector<Task> &_tasks;
 
+#if __cplusplus < 201103L
 private:
     Executor& operator=(const Executor&); // for older compilers
+#endif
 };
 
 int main()

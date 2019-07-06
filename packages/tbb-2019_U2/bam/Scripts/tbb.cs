@@ -74,10 +74,11 @@ namespace tbb
         Init(
             Bam.Core.Module parent)
         {
-            base.Init(parent);
+            // set the version BEFORE the parent Init() in order to exclude the SharedObject name symlink
+            // since that would be the name of the real shared object here
+            this.SetSemanticVersion(2); // see include/tbb/tbb_stddef.h, TBB_COMPATIBLE_INTERFACE_VERSION
 
-            // TODO: this needs to be just 2, but there is this bug https://github.com/markfinal/BuildAMation/issues/521
-            this.SetSemanticVersion(2, 0); // see include/tbb/tbb_stddef.h, TBB_COMPATIBLE_INTERFACE_VERSION
+            base.Init(parent);
 
             this.Macros["OutputName"] = Bam.Core.TokenizedString.CreateVerbatim("tbb");
 

@@ -34,10 +34,9 @@ namespace ParallelForTest1
         C.Cxx.ConsoleApplication
     {
         protected override void
-        Init(
-            Bam.Core.Module parent)
+        Init()
         {
-            base.Init(parent);
+            base.Init();
 
             var source = this.CreateCxxSourceContainer("$(packagedir)/source/*.cpp");
             this.CompileAndLinkAgainst<tbb.ThreadBuildingBlocks>(source);
@@ -93,10 +92,9 @@ namespace ParallelForTest1
         Publisher.Collation
     {
         protected override void
-        Init(
-            Bam.Core.Module parent)
+        Init()
         {
-            base.Init(parent);
+            base.Init();
 
             this.SetDefaultMacrosAndMappings(EPublishingType.ConsoleApplication);
             this.Include<ParallelForTest1>(C.Cxx.ConsoleApplication.ExecutableKey);

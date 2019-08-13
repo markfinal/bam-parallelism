@@ -34,10 +34,9 @@ namespace tbb
         C.PreprocessedFile
     {
         protected override void
-        Init(
-            Bam.Core.Module parent)
+        Init()
         {
-            base.Init(parent);
+            base.Init();
             this.RegisterGeneratedFile(
                 PreprocessedFileKey,
                 this.CreateTokenizedString("$(packagebuilddir)/$(config)/tbb.def")
@@ -71,14 +70,13 @@ namespace tbb
         C.Cxx.DynamicLibrary
     {
         protected override void
-        Init(
-            Bam.Core.Module parent)
+        Init()
         {
             // set the version BEFORE the parent Init() in order to exclude the SharedObject name symlink
             // since that would be the name of the real shared object here
             this.SetSemanticVersion(2); // see include/tbb/tbb_stddef.h, TBB_COMPATIBLE_INTERFACE_VERSION
 
-            base.Init(parent);
+            base.Init();
 
             this.Macros["OutputName"] = Bam.Core.TokenizedString.CreateVerbatim("tbb");
 
@@ -278,10 +276,9 @@ namespace tbb
         protected C.Cxx.ObjectFileCollection Source { get; private set; }
 
         protected override void
-        Init(
-            Bam.Core.Module parent)
+        Init()
         {
-            base.Init(parent);
+            base.Init();
 
             this.Source = this.CreateCxxSourceContainer();
             this.CompileAndLinkAgainst<ThreadBuildingBlocks>(this.Source);
@@ -343,10 +340,9 @@ namespace tbb
             TBBTest
         {
             protected override void
-            Init(
-                Bam.Core.Module parent)
+            Init()
             {
-                base.Init(parent);
+                base.Init();
                 this.Source.AddFiles("$(packagedir)/src/test/test_atomic.cpp");
             }
         }
@@ -355,10 +351,9 @@ namespace tbb
             TBBTest
         {
             protected override void
-            Init(
-                Bam.Core.Module parent)
+            Init()
             {
-                base.Init(parent);
+                base.Init();
                 this.Source.AddFiles("$(packagedir)/src/test/test_mutex.cpp");
             }
         }
@@ -367,10 +362,9 @@ namespace tbb
             TBBTest
         {
             protected override void
-            Init(
-                Bam.Core.Module parent)
+            Init()
             {
-                base.Init(parent);
+                base.Init();
                 this.Source.AddFiles("$(packagedir)/src/test/test_parallel_for.cpp");
             }
         }
@@ -379,10 +373,9 @@ namespace tbb
             TBBTest
         {
             protected override void
-            Init(
-                Bam.Core.Module parent)
+            Init()
             {
-                base.Init(parent);
+                base.Init();
                 this.Source.AddFiles("$(packagedir)/src/test/test_tbb_version.cpp");
             }
         }
@@ -392,10 +385,9 @@ namespace tbb
             Publisher.Collation
         {
             protected override void
-            Init(
-                Bam.Core.Module parent)
+            Init()
             {
-                base.Init(parent);
+                base.Init();
 
                 this.SetDefaultMacrosAndMappings(EPublishingType.ConsoleApplication);
 

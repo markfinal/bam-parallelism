@@ -80,10 +80,10 @@ namespace tbb
 
             this.Macros[Bam.Core.ModuleMacroNames.OutputName] = Bam.Core.TokenizedString.CreateVerbatim("tbb");
 
-            var headers = this.CreateHeaderContainer("$(packagedir)/include/**.h");
+            var headers = this.CreateHeaderCollection("$(packagedir)/include/**.h");
             headers.AddFiles("$(packagedir)/src/tbb/**.h");
 
-            var source = this.CreateCxxSourceContainer("$(packagedir)/src/tbb/*.cpp");
+            var source = this.CreateCxxSourceCollection("$(packagedir)/src/tbb/*.cpp");
             source.AddFiles("$(packagedir)/src/old/concurrent_queue_v2.cpp");
             source.AddFiles("$(packagedir)/src/old/concurrent_vector_v2.cpp");
             source.AddFiles("$(packagedir)/src/old/spin_rw_mutex_v2.cpp");
@@ -95,11 +95,11 @@ namespace tbb
             {
                 if (this.BitDepth == C.EBit.SixtyFour)
                 {
-                    this.CreateAssemblerSourceContainer("$(packagedir)/src/tbb/intel64-masm/*.asm");
+                    this.CreateAssemblerSourceCollection("$(packagedir)/src/tbb/intel64-masm/*.asm");
                 }
                 else
                 {
-                    this.CreateAssemblerSourceContainer("$(packagedir)/src/tbb/ia32-masm/*.asm");
+                    this.CreateAssemblerSourceCollection("$(packagedir)/src/tbb/ia32-masm/*.asm");
                 }
             }
 
@@ -280,7 +280,7 @@ namespace tbb
         {
             base.Init();
 
-            this.Source = this.CreateCxxSourceContainer();
+            this.Source = this.CreateCxxSourceCollection();
             this.CompileAndLinkAgainst<ThreadBuildingBlocks>(this.Source);
 
             this.Source.PrivatePatch(settings =>

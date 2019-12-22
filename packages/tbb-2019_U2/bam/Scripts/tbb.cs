@@ -165,6 +165,36 @@ namespace tbb
                     preprocessor.PreprocessorDefines.Add("USE_PTHREAD");
                 }
 
+                if (settings is C.ICommonCompilerSettings compiler)
+                {
+                    compiler.WarningsAsErrors = false;
+                }
+                if (settings is C.ICxxOnlyCompilerSettings cxxCompiler)
+                {
+                    cxxCompiler.LanguageStandard = C.Cxx.ELanguageStandard.Cxx11;
+                    cxxCompiler.StandardLibrary = C.Cxx.EStandardLibrary.libcxx;
+                    cxxCompiler.ExceptionHandler = C.Cxx.EExceptionHandler.Asynchronous;
+                }
+
+                if (settings is VisualCCommon.ICommonCompilerSettings vcCompiler)
+                {
+                    vcCompiler.WarningLevel = VisualCCommon.EWarningLevel.Level4;
+                }
+                if (settings is ClangCommon.ICommonCompilerSettings clangCompiler)
+                {
+                    clangCompiler.AllWarnings = true;
+                    clangCompiler.ExtraWarnings = true;
+                    clangCompiler.Pedantic = true;
+
+                    // still needed, even with the exported symbols file
+                    /*
+                     * Undefined symbols for architecture x86_64:
+  "tbb::interface5::internal::task_base::destroy(tbb::task&)", referenced from:
+      tbb::flow::interface10::graph::~graph() in main.o
+                     */
+                    clangCompiler.Visibility = ClangCommon.EVisibility.Default;
+                }
+
                 /*
                 preprocessor.IncludePaths.AddUnique(this.CreateTokenizedString("$(packagedir)/src"));
 
@@ -189,9 +219,6 @@ namespace tbb
                     clangCompiler.AllWarnings = true;
                     clangCompiler.ExtraWarnings = true;
                     clangCompiler.Pedantic = true;
-                    // still needed, even with an exported symbol list, otherwise there are ld warnings
-                    // e.g. ld: warning: cannot export hidden symbol tbb::mutex::scoped_lock::internal_acquire(tbb::mutex&) from /Users/mark/dev/bam-parallelism/packages/tbb-2019_U2/build/tbb-2019_U2/ThreadBuildingBlocks/Debug/obj/src/tbb/mutex.o
-                    clangCompiler.Visibility = ClangCommon.EVisibility.Default;
 
                     var compiler = settings as C.ICommonCompilerSettings;
                     compiler.DisableWarnings.AddUnique("keyword-macro");
@@ -244,12 +271,10 @@ namespace tbb
 
             this.PrivatePatch(settings =>
             {
-                /*
                 if (settings is C.ICxxOnlyLinkerSettings cxxLinker)
                 {
                     cxxLinker.StandardLibrary = C.Cxx.EStandardLibrary.libcxx;
                 }
-                */
             });
 
             if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.Windows))
@@ -314,7 +339,6 @@ namespace tbb
             }
             else if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.OSX))
             {
-                /*
                 var preprocessedExportFile = Bam.Core.Module.Create<PreprocessExportFile>(preInitCallback: module =>
                 {
                     string defFilename = "mac64-tbb-export.def";
@@ -328,14 +352,23 @@ namespace tbb
                         srcModule.InputPath = this.CreateTokenizedString($"$(packagedir)/src/tbb/{defFilename}");
                     });
                 });
-                this.DependsOn(preprocessedExportFile);
+                source.DependsOn(preprocessedExportFile);
+
+                preprocessedExportFile.PrivatePatch(settings =>
+                {
+                    if (settings is C.ICommonPreprocessorSettings preprocessor)
+                    {
+                        preprocessor.IncludePaths.AddUnique(this.CreateTokenizedString("$(packagedir)/include"));
+                    }
+                });
 
                 this.PrivatePatch(settings =>
                 {
-                    var clangLinker = settings as ClangCommon.ICommonLinkerSettings;
-                    clangLinker.ExportedSymbolList = preprocessedExportFile.GeneratedPaths[PreprocessExportFile.PreprocessedFileKey];
+                    if (settings is ClangCommon.ICommonLinkerSettings clangLinker)
+                    {
+                        clangLinker.ExportedSymbolList = preprocessedExportFile.GeneratedPaths[PreprocessExportFile.PreprocessedFileKey];
+                    }
                 });
-                */
             }
         }
     }

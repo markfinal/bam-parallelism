@@ -43,13 +43,20 @@ namespace ParallelForTest1
 
             source.PrivatePatch(settings =>
             {
-                var compiler = settings as C.ICommonCompilerSettings;
-                compiler.WarningsAsErrors = true;
+                if (settings is C.ICommonCompilerSettings compiler)
+                {
+                    compiler.WarningsAsErrors = true;
+                }
 
+                if (settings is C.ICxxOnlyCompilerSettings cxxCompiler)
+                {
+                    cxxCompiler.LanguageStandard = C.Cxx.ELanguageStandard.Cxx11;
+                    cxxCompiler.StandardLibrary = C.Cxx.EStandardLibrary.libcxx; // will fail to find standard headers otherwise
+                }
+                /*
                 var cxxCompiler = settings as C.ICxxOnlyCompilerSettings;
-                cxxCompiler.LanguageStandard = C.Cxx.ELanguageStandard.Cxx11;
-                cxxCompiler.StandardLibrary = C.Cxx.EStandardLibrary.libcxx; // will fail to find standard headers otherwise
                 cxxCompiler.ExceptionHandler = C.Cxx.EExceptionHandler.Asynchronous;
+                */
 
                 if (settings is VisualCCommon.ICommonCompilerSettings vcCompiler)
                 {
@@ -59,7 +66,7 @@ namespace ParallelForTest1
                 {
                     gccCompiler.AllWarnings = true;
                     gccCompiler.ExtraWarnings = true;
-                    gccCompiler.Pedantic = false; // some extra semi-colons in TBB headers
+                    gccCompiler.Pedantic = true;
                 }
                 else if (settings is ClangCommon.ICommonCompilerSettings clangCompiler)
                 {
@@ -77,12 +84,14 @@ namespace ParallelForTest1
                 }
                 if (settings is C.ICommonLinkerSettingsLinux linuxLinker)
                 {
+                    /*
                     linuxLinker.CanUseOrigin = true;
                     linuxLinker.RPath.AddUnique("$ORIGIN");
 
                     var linker = settings as C.ICommonLinkerSettings;
                     linker.Libraries.AddUnique("-lpthread");
                     linker.Libraries.AddUnique("-ldl");
+                    */
                 }
             });
         }

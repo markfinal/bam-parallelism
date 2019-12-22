@@ -43,10 +43,8 @@ namespace ParallelForTest1
 
             source.PrivatePatch(settings =>
             {
-                if (settings is C.ICommonCompilerSettings compiler)
-                {
-                    compiler.WarningsAsErrors = true;
-                }
+                var compiler = settings as C.ICommonCompilerSettings;
+                compiler.WarningsAsErrors = true;
 
                 if (settings is C.ICxxOnlyCompilerSettings cxxCompiler)
                 {
@@ -64,6 +62,8 @@ namespace ParallelForTest1
                     gccCompiler.AllWarnings = true;
                     gccCompiler.ExtraWarnings = true;
                     gccCompiler.Pedantic = true;
+
+                    compiler.DisableWarnings.AddUnique("pedantic");
                 }
                 else if (settings is ClangCommon.ICommonCompilerSettings clangCompiler)
                 {

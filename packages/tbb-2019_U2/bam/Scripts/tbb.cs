@@ -106,7 +106,7 @@ namespace tbb
 
             // set the version BEFORE the parent Init() in order to exclude the SharedObject name symlink
             // since that would be the name of the real shared object here
-            this.SetSemanticVersion(2); // see include/tbb/tbb_stddef.h, TBB_COMPATIBLE_INTERFACE_VERSION
+            //this.SetSemanticVersion(2); // see include/tbb/tbb_stddef.h, TBB_COMPATIBLE_INTERFACE_VERSION
 
             base.Init();
 
@@ -193,6 +193,20 @@ namespace tbb
       tbb::flow::interface10::graph::~graph() in main.o
                      */
                     clangCompiler.Visibility = ClangCommon.EVisibility.Default;
+                }
+                if (settings is GccCommon.ICommonCompilerSettings gccCompiler)
+                {
+                    gccCompiler.AllWarnings = true;
+                    gccCompiler.ExtraWarnings = true;
+                    gccCompiler.Pedantic = true;
+
+                    // still needed, even with the exported symbols file
+                    /*
+                     * Undefined symbols for architecture x86_64:
+  "tbb::interface5::internal::task_base::destroy(tbb::task&)", referenced from:
+      tbb::flow::interface10::graph::~graph() in main.o
+                     */
+                    gccCompiler.Visibility = GccCommon.EVisibility.Default;
                 }
 
                 /*
@@ -312,7 +326,6 @@ namespace tbb
             }
             else if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.Linux))
             {
-                /*
                 var preprocessedExportFile = Bam.Core.Module.Create<PreprocessExportFile>(preInitCallback: module =>
                 {
                     string defFilename = "lin64-tbb-export.def";
@@ -326,16 +339,29 @@ namespace tbb
                         srcModule.InputPath = this.CreateTokenizedString($"$(packagedir)/src/tbb/{defFilename}");
                     });
                 });
-                this.DependsOn(preprocessedExportFile);
+                source.DependsOn(preprocessedExportFile);
+
+                preprocessedExportFile.PrivatePatch(settings =>
+                {
+                    if (settings is C.ICommonPreprocessorSettings preprocessor)
+                    {
+                        preprocessor.IncludePaths.AddUnique(this.CreateTokenizedString("$(packagedir)/include"));
+                    }
+                });
 
                 this.PrivatePatch(settings =>
                 {
                     if (settings is C.ICommonLinkerSettingsLinux linuxLinker)
                     {
                         linuxLinker.VersionScript = preprocessedExportFile.GeneratedPaths[PreprocessExportFile.PreprocessedFileKey];
+                        linuxLinker.SharedObjectName = this.CreateTokenizedString("$(dynamicprefix)$(OutputName).so.2"); // see SONAME_SUFFIX in source tree
+                    }
+                    if (settings is C.ICommonLinkerSettings linker)
+                    {
+                        linker.Libraries.AddUnique("-lpthread");
+                        linker.Libraries.AddUnique("-ldl");
                     }
                 });
-                */
             }
             else if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.OSX))
             {

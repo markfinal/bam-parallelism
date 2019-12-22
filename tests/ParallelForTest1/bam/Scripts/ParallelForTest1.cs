@@ -39,7 +39,7 @@ namespace ParallelForTest1
             base.Init();
 
             var source = this.CreateCxxSourceCollection("$(packagedir)/source/*.cpp");
-            this.CompileAndLinkAgainst<tbb.ThreadBuildingBlocks>(source);
+            this.UseSDK<tbb.SDK>(source);
 
             source.PrivatePatch(settings =>
             {

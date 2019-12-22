@@ -67,9 +67,35 @@ namespace tbb
     }
 
     [Bam.Core.ModuleGroup("Thirdparty/TBB")]
-    class ThreadBuildingBlocks :
-        C.Cxx.DynamicLibrary
+    class SDK :
+        C.SDKTemplate
     {
+        protected override Bam.Core.TypeArray LibraryModuleTypes { get; } = new Bam.Core.TypeArray(
+            typeof(ThreadBuildingBlocks)
+        );
+
+        protected override void
+        Init()
+        {
+            base.Init();
+
+            var exportsFiles = this.Find<PreprocessExportFile>();
+            foreach (var exports in exportsFiles)
+            {
+                (exports as Publisher.CollatedObject).Ignore = true;
+            }
+        }
+    }
+
+    [Bam.Core.ModuleGroup("Thirdparty/TBB")]
+    class ThreadBuildingBlocks :
+        C.Cxx.DynamicLibrary,
+        C.IPublicHeaders
+    {
+        Bam.Core.StringArray C.IPublicHeaders.PublicHeaders { get; } = new Bam.Core.StringArray(
+            "include/**.h"
+        );
+
         protected override void
         Init()
         {
@@ -106,16 +132,38 @@ namespace tbb
 
             var versionString = Bam.Core.Graph.Instance.FindReferencedModule<VersionStringVer>();
             source.DependsOn(versionString);
-            this.DependsOn(versionString);
             source.UsePublicPatches(versionString);
+            /*
+            this.DependsOn(versionString);
+            */
 
             source.PrivatePatch(settings =>
             {
                 var preprocessor = settings as C.ICommonPreprocessorSettings;
+
+                // build the library
+                preprocessor.PreprocessorDefines.Add("__TBB_BUILD", "1");
+
+                // use the public headers
+                preprocessor.IncludePaths.AddUnique(this.CreateTokenizedString("$(packagedir)/include"));
+
+                // and some internal headers
+                preprocessor.IncludePaths.AddUnique(this.CreateTokenizedString("$(packagedir)/src"));
+
+                // specify which threading platform is needed
+                if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.Windows))
+                {
+                    preprocessor.PreprocessorDefines.Add("USE_WINTHREAD");
+                }
+                else
+                {
+                    preprocessor.PreprocessorDefines.Add("USE_PTHREAD");
+                }
+
+                /*
                 preprocessor.IncludePaths.AddUnique(this.CreateTokenizedString("$(packagedir)/src"));
 
                 preprocessor.PreprocessorDefines.Add("TBB_USE_EXCEPTIONS");
-                preprocessor.PreprocessorDefines.Add("__TBB_BUILD", "1");
                 if (this.BuildEnvironment.Configuration.HasFlag(Bam.Core.EConfiguration.Debug))
                 {
                     if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.NotWindows))
@@ -124,14 +172,6 @@ namespace tbb
                         preprocessor.PreprocessorDefines.Add("TBB_USE_DEBUG");
                     }
                     preprocessor.PreprocessorDefines.Add("TBB_USE_ASSERT");
-                }
-                if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.Windows))
-                {
-                    preprocessor.PreprocessorDefines.Add("USE_WINTHREAD");
-                }
-                else
-                {
-                    preprocessor.PreprocessorDefines.Add("USE_PTHREAD");
                 }
 
                 var cxxCompiler = settings as C.ICxxOnlyCompilerSettings;
@@ -172,8 +212,10 @@ namespace tbb
                     var compiler = settings as C.ICommonCompilerSettings;
                     compiler.DisableWarnings.AddUnique("parentheses");
                 }
+                */
             });
 
+            /*
             this.PublicPatch((settings, appliedTo) =>
             {
                 if (settings is C.ICommonPreprocessorSettings preprocessor)
@@ -193,13 +235,16 @@ namespace tbb
                     }
                 }
             });
+            */
 
             this.PrivatePatch(settings =>
             {
+                /*
                 if (settings is C.ICxxOnlyLinkerSettings cxxLinker)
                 {
                     cxxLinker.StandardLibrary = C.Cxx.EStandardLibrary.libcxx;
                 }
+                */
             });
 
             if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.Windows))
@@ -219,6 +264,14 @@ namespace tbb
                 });
                 this.DependsOn(preprocessedExportFile);
 
+                preprocessedExportFile.PrivatePatch(settings =>
+                {
+                    if (settings is C.ICommonPreprocessorSettings preprocessor)
+                    {
+                        preprocessor.IncludePaths.AddUnique(this.CreateTokenizedString("$(packagedir)/include"));
+                    }
+                });
+
                 this.PrivatePatch(settings =>
                 {
                     if (settings is C.ICommonLinkerSettingsWin winLinker)
@@ -229,6 +282,7 @@ namespace tbb
             }
             else if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.Linux))
             {
+                /*
                 var preprocessedExportFile = Bam.Core.Module.Create<PreprocessExportFile>(preInitCallback: module =>
                 {
                     string defFilename = "lin64-tbb-export.def";
@@ -251,9 +305,11 @@ namespace tbb
                         linuxLinker.VersionScript = preprocessedExportFile.GeneratedPaths[PreprocessExportFile.PreprocessedFileKey];
                     }
                 });
+                */
             }
             else if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.OSX))
             {
+                /*
                 var preprocessedExportFile = Bam.Core.Module.Create<PreprocessExportFile>(preInitCallback: module =>
                 {
                     string defFilename = "mac64-tbb-export.def";
@@ -274,6 +330,7 @@ namespace tbb
                     var clangLinker = settings as ClangCommon.ICommonLinkerSettings;
                     clangLinker.ExportedSymbolList = preprocessedExportFile.GeneratedPaths[PreprocessExportFile.PreprocessedFileKey];
                 });
+                */
             }
         }
     }
@@ -290,7 +347,7 @@ namespace tbb
             base.Init();
 
             this.Source = this.CreateCxxSourceCollection();
-            this.CompileAndLinkAgainst<ThreadBuildingBlocks>(this.Source);
+            this.UseSDK<tbb.SDK>(this.Source);
 
             this.Source.PrivatePatch(settings =>
             {

@@ -39,7 +39,8 @@ namespace tbb
             base.Init();
             this.RegisterGeneratedFile(
                 PreprocessedFileKey,
-                this.CreateTokenizedString("$(packagebuilddir)/$(config)/tbb.def")
+                this.CreateTokenizedString("$(packagebuilddir)/$(config)/tbb.def"),
+                true
             );
             this.PrivatePatch(settings =>
             {
@@ -245,8 +246,10 @@ namespace tbb
 
                 this.PrivatePatch(settings =>
                 {
-                    var gccLinker = settings as GccCommon.ICommonLinkerSettings;
-                    gccLinker.VersionScript = preprocessedExportFile.GeneratedPaths[PreprocessExportFile.PreprocessedFileKey];
+                    if (settings is C.ICommonLinkerSettingsLinux linuxLinker)
+                    {
+                        linuxLinker.VersionScript = preprocessedExportFile.GeneratedPaths[PreprocessExportFile.PreprocessedFileKey];
+                    }
                 });
             }
             else if (this.BuildEnvironment.Platform.Includes(Bam.Core.EPlatform.OSX))
@@ -327,10 +330,10 @@ namespace tbb
                 {
                     cxxLinker.StandardLibrary = C.Cxx.EStandardLibrary.libcxx;
                 }
-                if (settings is GccCommon.ICommonLinkerSettings gccLinker)
+                if (settings is C.ICommonLinkerSettingsLinux linuxLinker)
                 {
-                    gccLinker.CanUseOrigin = true;
-                    gccLinker.RPath.AddUnique("$ORIGIN");
+                    linuxLinker.CanUseOrigin = true;
+                    linuxLinker.RPath.AddUnique("$ORIGIN");
 
                     var linker = settings as C.ICommonLinkerSettings;
                     linker.Libraries.AddUnique("-lpthread");

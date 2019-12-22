@@ -52,11 +52,8 @@ namespace ParallelForTest1
                 {
                     cxxCompiler.LanguageStandard = C.Cxx.ELanguageStandard.Cxx11;
                     cxxCompiler.StandardLibrary = C.Cxx.EStandardLibrary.libcxx; // will fail to find standard headers otherwise
+                    cxxCompiler.ExceptionHandler = C.Cxx.EExceptionHandler.Asynchronous;
                 }
-                /*
-                var cxxCompiler = settings as C.ICxxOnlyCompilerSettings;
-                cxxCompiler.ExceptionHandler = C.Cxx.EExceptionHandler.Asynchronous;
-                */
 
                 if (settings is VisualCCommon.ICommonCompilerSettings vcCompiler)
                 {

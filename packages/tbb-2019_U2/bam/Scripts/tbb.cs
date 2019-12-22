@@ -92,13 +92,18 @@ namespace tbb
         C.Cxx.DynamicLibrary,
         C.IPublicHeaders
     {
-        Bam.Core.StringArray C.IPublicHeaders.PublicHeaders { get; } = new Bam.Core.StringArray(
-            "include/**.h"
+        private Bam.Core.TokenizedString includeSourceRootDir;
+        Bam.Core.TokenizedString C.IPublicHeaders.SourceRootDirectory => includeSourceRootDir;
+
+        Bam.Core.StringArray C.IPublicHeaders.PublicHeaderPaths { get; } = new Bam.Core.StringArray(
+            "**.h"
         );
 
         protected override void
         Init()
         {
+            this.includeSourceRootDir = this.CreateTokenizedString("$(packagedir)/include");
+
             // set the version BEFORE the parent Init() in order to exclude the SharedObject name symlink
             // since that would be the name of the real shared object here
             this.SetSemanticVersion(2); // see include/tbb/tbb_stddef.h, TBB_COMPATIBLE_INTERFACE_VERSION

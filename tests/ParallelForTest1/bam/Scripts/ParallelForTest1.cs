@@ -81,9 +81,9 @@ namespace ParallelForTest1
                 }
                 if (settings is C.ICommonLinkerSettingsLinux linuxLinker)
                 {
-                    /*
                     linuxLinker.CanUseOrigin = true;
                     linuxLinker.RPath.AddUnique("$ORIGIN");
+                    /*
 
                     var linker = settings as C.ICommonLinkerSettings;
                     linker.Libraries.AddUnique("-lpthread");

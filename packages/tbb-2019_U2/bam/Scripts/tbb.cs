@@ -267,7 +267,7 @@ namespace tbb
                         srcModule.InputPath = this.CreateTokenizedString($"$(packagedir)/src/tbb/{defFilename}");
                     });
                 });
-                this.DependsOn(preprocessedExportFile);
+                source.DependsOn(preprocessedExportFile);
 
                 preprocessedExportFile.PrivatePatch(settings =>
                 {

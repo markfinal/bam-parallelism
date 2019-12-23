@@ -64,6 +64,10 @@ namespace ParallelForTest1
                     gccCompiler.Pedantic = true;
 
                     compiler.DisableWarnings.AddUnique("pedantic");
+                    if (source.Compiler.Version.AtLeast(GccCommon.ToolchainVersion.GCC_9))
+                    {
+                        compiler.DisableWarnings.AddUnique("class-memaccess");
+                    }
                 }
                 else if (settings is ClangCommon.ICommonCompilerSettings clangCompiler)
                 {

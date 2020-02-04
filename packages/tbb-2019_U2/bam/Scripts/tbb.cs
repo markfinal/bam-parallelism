@@ -84,6 +84,15 @@ namespace tbb
             {
                 (exports as Publisher.CollatedObject).Ignore = true;
             }
+
+            this.PublicPatch((settings, appliedTo) =>
+            {
+                if (settings is C.ICommonPreprocessorSettings preprocessor)
+                {
+                    // TODO: this needs to be an SDK configuration option
+                    preprocessor.PreprocessorDefines.Add("__TBB_NO_IMPLICIT_LINKAGE");
+                }
+            });
         }
     }
 

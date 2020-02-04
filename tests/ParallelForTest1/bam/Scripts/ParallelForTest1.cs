@@ -27,7 +27,6 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endregion // License
-using Bam.Core;
 namespace ParallelForTest1
 {
     class ParallelForTest1 :
@@ -39,7 +38,8 @@ namespace ParallelForTest1
             base.Init();
 
             var source = this.CreateCxxSourceCollection("$(packagedir)/source/*.cpp");
-            this.UseSDK<tbb.SDK>(source);
+            source.CompileAgainstSDK<tbb.SDK>();
+            this.LinkAgainstSDK<tbb.SDK>();
 
             source.PrivatePatch(settings =>
             {

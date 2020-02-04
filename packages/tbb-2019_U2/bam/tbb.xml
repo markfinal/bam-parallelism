@@ -13,7 +13,8 @@
     <Package name="MakeFileBuilder" />
     <Package name="NativeBuilder" />
     <Package name="Publisher" />
-    <Package name="VisualC" version="15.0" />
+    <Package name="VisualC" version="15.0" default="true" />
+    <Package name="VisualC" version="16" />
     <Package name="VSSolutionBuilder" />
     <Package name="XcodeBuilder" />
   </Dependents>

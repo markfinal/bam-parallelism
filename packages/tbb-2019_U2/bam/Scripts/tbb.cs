@@ -411,7 +411,8 @@ namespace tbb
             base.Init();
 
             this.Source = this.CreateCxxSourceCollection();
-            this.UseSDK<tbb.SDK>(this.Source);
+            this.Source.CompileAgainstSDK<SDK>();
+            this.LinkAgainstSDK<SDK>();
 
             this.Source.PrivatePatch(settings =>
             {
